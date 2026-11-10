@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hey, My Name Is Tony</title>
+<meta name="description" content="Tony's tavern on the internet. Pull up a stool, then head to the stream.">
+<meta property="og:title" content="Hey, My Name Is Tony">
+<meta property="og:description" content="Tony's tavern on the internet. Pull up a stool, then head to the stream.">
+<meta property="og:url" content="https://heymynameistony.com/">
+<meta name="theme-color" content="#0d0b2b">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%93%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --night: #0d0b2b;
+    --gold: #ffe066;
+    --choice: #c77dff;
+    --speech: #7ff0e4;
+    --ink: #05040f;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; background: var(--ink); }
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: "VT323", "Courier New", monospace;
+    color: var(--choice);
+  }
+  .game { width: min(100%, 960px); }
+
+  /* The scene: a 320x180 canvas scaled up with hard pixel edges */
+  .screen {
+    position: relative;
+    container-type: inline-size;
+    aspect-ratio: 16 / 9;
+    background: var(--night);
+    overflow: hidden;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+  .screen::after { /* faint CRT scanlines */
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(to bottom, transparent 0 2px, rgba(0, 0, 0, .13) 2px 3px);
+    pointer-events: none;
+  }
+  h1 { /* sits on the wooden sign drawn in the scene */
+    position: absolute;
+    top: 5.55%;
+    left: 15%;
+    width: 70%;
+    height: 11.1%;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font: 400 2.9cqw/1 "Press Start 2P", monospace;
+    color: var(--gold);
+    text-shadow: .3cqw .3cqw 0 #2a1a14;
+    letter-spacing: .04em;
+    white-space: nowrap;
+  }
+  .speech { /* floats above the barkeep's head and grows upward */
+    position: absolute;
+    bottom: 70%;
+    left: 21%;
+    width: 58%;
+    margin: 0;
+    text-align: center;
+    font-size: max(3.1cqw, 13px);
+    line-height: .95;
+    color: var(--speech);
+    text-shadow: 1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000, 0 2px 0 #000;
+    animation: speech-fade 5s ease-in forwards;
+  }
+  @keyframes speech-fade { /* readable for 3 seconds, gone by 5 */
+    0%, 60% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  /* Dialogue choices, adventure-game style */
+  .choices {
+    margin: 0;
+    padding: 14px 16px 18px;
+    list-style: none;
+    background: #000;
+    border-top: 3px solid #2e1b5f;
+  }
+  .choices a, .choices button {
+    display: block;
+    width: 100%;
+    padding: 3px 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    font-size: clamp(20px, 3.2vw, 28px);
+    line-height: 1.1;
+    text-align: left;
+    text-decoration: none;
+    color: var(--choice);
+    cursor: pointer;
+  }
+  .choices a::before, .choices button::before { content: "\25B8\00A0"; }
+  .choices a:hover, .choices button:hover,
+  .choices a:focus-visible, .choices button:focus-visible {
+    color: var(--gold);
+    outline: none;
+  }
+  .choices a { color: #f29b54; }
+  footer {
+    padding: 10px 16px 16px;
+    font-size: 18px;
+    color: #4a3d78;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<main class="game">
+  <div class="screen">
+    <canvas id="scene" width="320" height="180" role="img"
+      aria-label="Pixel art of a pirate tavern interior: a barkeep behind the bar, shelves of bottles, a keg with a parrot on it, and a window onto the harbour at dusk"></canvas>
+    <h1>HEY, MY NAME IS TONY</h1>
+    <p class="speech" id="speech" aria-live="polite">Ahoy! Pull up a stool. What'll it be?</p>
+  </div>
+
+  <!-- EDIT ME: the first item is the real link; the rest are just banter.
+       Add more links by copying the <a> line, or more banter by copying a <button> line. -->
+  <ul class="choices">
+    <li><a href="https://www.twitch.tv/heymynameistony">Take me to the stream, barkeep.</a></li>
+    <li><button type="button" data-glance data-say="Did you not read the sign? I run the tavern, tell tales, and play games on the stream!">Who are you supposed to be?</button></li>
+    <li><button type="button" data-serve data-say="Games, grog, and questionable decisions. All on tap over at the stream.">What do you serve here?</button></li>
+    <li><button type="button" data-say="Aye. It's the friends we made along the way. Also the follow button.">Is there treasure on this island?</button></li>
+    <li><button type="button" data-say="Take your time. It's nice water.">I'm just here to look at the water.</button></li>
+  </ul>
+</main>
+<footer>heymynameistony.com</footer>
+
+<script>
+(() => {
+  // ---- dialogue ----
+  const speech = document.getElementById('speech');
+  let glanceUntil = 0; // while Date.now() is below this, the barkeep points at the sign
+  const serves = [];    // timestamps of each mug of grog ordered
+  const SERVE_MS = 900, MAX_MUGS = 4;
+  document.querySelectorAll('[data-say]').forEach(b =>
+    b.addEventListener('click', () => {
+      const now = Date.now();
+      const cutOff = 'serve' in b.dataset && serves.length >= MAX_MUGS;
+      speech.textContent = cutOff ? "No, no. I think you've had enough." : b.dataset.say;
+      speech.style.animation = 'none'; void speech.offsetWidth; speech.style.animation = ''; // restart the fade
+      if ('glance' in b.dataset) glanceUntil = now + 1800;
+      if ('serve' in b.dataset && !cutOff && !(now - serves[serves.length - 1] < SERVE_MS)) serves.push(now);
+      [0, 360, 910, 1850].forEach(ms => setTimeout(() => draw(t), ms)); // keeps poses working with animation off
+    }));
+
+  // ---- scene: behind the bar ----
+  const canvas = document.getElementById('scene');
+  const W = 320, H = 180;
+  let g = canvas.getContext('2d');
+  const R = (col, x, y, w, h) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
+  const layer = () => { const c = document.createElement('canvas'); c.width = W; c.height = H; return c; };
+  const disc = (col, cx, cy, r) => {
+    for (let dy = -r; dy <= r; dy++) {
+      const w = Math.floor(Math.sqrt(r * r - dy * dy));
+      R(col, cx - w, cy + dy, w * 2, 1);
+    }
+  };
+  const glow = (col, cx, cy, r, alpha) => { // checkerboard-dithered light
+    g.globalAlpha = alpha;
+    for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++)
+      if (dx * dx + dy * dy < r * r && (dx + dy) % 2 === 0) R(col, cx + dx, cy + dy, 1, 1);
+    g.globalAlpha = 1;
+  };
+  const DARK = '#1a0f12', WOOD = '#4a2c18', WOOD_HI = '#5a3a22', WOOD_LO = '#3b2619', BRASS = '#c9a66b', PEWTER = '#8a8a94';
+  const WARM = ['#f4c95d', '#ffd97a', '#f0b848'];
+  const hash = n => ((n * 2654435761) >>> 0) % 3;
+  const LANTERNS = [63, 251];
+
+  // Back layer: wall, window, shelves, keg, map, sign
+  const bg = layer(); g = bg.getContext('2d');
+  R('#33202a', 0, 0, W, H);
+  for (let x = 0; x < W; x += 14) { R('#2a1a23', x, 0, 1, H); R('#3a2530', x + 6, (x * 7) % 50 + 20, 1, 30); }
+  LANTERNS.forEach(x => { glow('#4d3034', x + 3, 36, 30, 1); glow('#5c3a38', x + 3, 36, 17, 1); });
+  R(DARK, 0, 0, W, 8); R('#2a1a14', 0, 8, W, 2);
+  for (let x = 4; x < W; x += 64) R('#231418', x, 0, 10, 12);
+  // window onto the harbour
+  R(DARK, 8, 40, 52, 46);
+  let wy = 42;
+  [['#2e1b5f', 6], ['#652a70', 6], ['#b84a5e', 5], ['#dd6b4d', 4], ['#f29b54', 4], ['#3b2a6b', 5], ['#1d1b52', 12]]
+    .forEach(([col, h]) => { R(col, 10, wy, 48, h); wy += h; });
+  disc('#fdf3c4', 20, 50, 4);
+  R('#120c2e', 37, 65, 13, 2); R('#120c2e', 41, 56, 1, 9); R('#120c2e', 46, 54, 1, 11);
+  R('#2a1c52', 38, 57, 4, 6); R('#2a1c52', 43, 55, 5, 8);
+  R(WOOD, 6, 86, 56, 3); R(WOOD_HI, 6, 86, 56, 1);
+  // back counter
+  R(WOOD_LO, 0, 112, W, 16); R(WOOD_HI, 0, 112, W, 1);
+  // shelves, bottles, mugs
+  const bottle = (x, base, col, h) => {
+    R(col, x, base - h + 4, 4, h - 4); R(col, x + 1, base - h, 2, 4); R(BRASS, x + 1, base - h - 1, 2, 1);
+    g.globalAlpha = .35; R('#ffffff', x, base - h + 5, 1, h - 7); g.globalAlpha = 1;
+  };
+  const mug = (x, base) => {
+    R('#9c8f7a', x, base - 6, 5, 6); R('#c2b59c', x, base - 6, 1, 6);
+    R('#9c8f7a', x + 5, base - 5, 1, 1); R('#9c8f7a', x + 6, base - 4, 1, 2); R('#9c8f7a', x + 5, base - 2, 1, 1);
+  };
+  const GLASS = ['#2f7d4f', '#b5651d', '#3b5fa8', '#a3243b', '#6a3fa0', '#2f8f96'], TALL = [12, 14, 10, 13, 11];
+  [[84, 48], [190, 56]].forEach(([sx, sw], s) => {
+    [76, 98].forEach((base, tier) => {
+      R(WOOD_HI, sx, base, sw, 1); R(WOOD_LO, sx, base + 1, sw, 2);
+      R(DARK, sx + 2, base + 3, 2, 3); R(DARK, sx + sw - 4, base + 3, 2, 3);
+      for (let i = 0, x = sx + 3; x < sx + sw - 6; i++, x += 7) {
+        const n = i + s * 3 + tier * 5;
+        if (tier === 1 && i % 2 === s) { mug(x, base); x += 2; }
+        else bottle(x, base, GLASS[n % 6], TALL[(n * 3) % 5]);
+      }
+    });
+  });
+  // keg on the back counter
+  R('#2a1a14', 266, 110, 36, 3);
+  disc('#3b2619', 284, 95, 17); disc('#7a4a28', 284, 95, 14);
+  for (let x = 273; x < 297; x += 5) R('#5f3a20', x, 83, 1, 24);
+  disc('#5f3a20', 284, 95, 2); R(BRASS, 282, 103, 4, 3); R(PEWTER, 283, 106, 2, 5);
+  // treasure map
+  R('#b89c66', 273, 33, 30, 28); R('#d9c08a', 274, 34, 28, 26); R('#b89c66', 274, 58, 3, 2); R('#b89c66', 299, 34, 3, 2);
+  R('#8fae6b', 278, 38, 8, 5); R('#8fae6b', 280, 43, 4, 2);
+  [[288, 42], [291, 45], [292, 49], [289, 52], [285, 53]].forEach(([x, y]) => R('#7a5540', x, y, 2, 1));
+  R('#a3243b', 279, 51, 1, 1); R('#a3243b', 283, 51, 1, 1); R('#a3243b', 280, 52, 1, 1); R('#a3243b', 282, 52, 1, 1);
+  R('#a3243b', 281, 53, 1, 1); R('#a3243b', 280, 54, 1, 1); R('#a3243b', 282, 54, 1, 1); R('#a3243b', 279, 55, 1, 1); R('#a3243b', 283, 55, 1, 1);
+  R(PEWTER, 287, 35, 2, 1);
+  // name sign (the page title sits on top of it)
+  R(DARK, 60, 8, 1, 3); R(DARK, 259, 8, 1, 3);
+  R(DARK, 47, 9, 226, 22); R(WOOD_HI, 48, 10, 224, 20); R(WOOD, 48, 16, 224, 1); R(WOOD, 48, 23, 224, 1);
+  [[50, 12], [268, 12], [50, 26], [268, 26]].forEach(([x, y]) => R(BRASS, x, y, 2, 2));
+  // lantern chains
+  LANTERNS.forEach(x => R(DARK, x + 3, 10, 1, 20));
+
+  const tankard = (x, y) => { // x, y = top-left of the mug body; foam sits above it
+    R('#b08d57', x, y, 12, 14); R('#c9a873', x + 1, y, 2, 14);
+    R('#6a4a2a', x, y + 3, 12, 1); R('#6a4a2a', x, y + 10, 12, 1);
+    R('#b08d57', x + 12, y + 3, 3, 2); R('#b08d57', x + 14, y + 5, 2, 5); R('#b08d57', x + 12, y + 10, 3, 2);
+    R('#fff6d8', x - 1, y - 3, 14, 4); R('#fff6d8', x + 1, y - 5, 4, 2); R('#fff6d8', x + 7, y - 4, 5, 1); R('#fff6d8', x, y + 1, 2, 3);
+  };
+
+  // Front layer: the bar and what's on it
+  const fg = layer(); g = fg.getContext('2d');
+  R('#7a4a28', 0, 128, W, 8); R('#9a6234', 0, 128, W, 1);
+  for (let i = 0; i < 22; i++) R('#6a3f22', (i * 67) % 300 + 4, 130 + (i * 3) % 5, 9 + i % 6, 1);
+  R(WOOD_LO, 0, 136, W, 2); R(WOOD, 0, 138, W, 42);
+  for (let x = 20; x < W; x += 40) { R('#3a2112', x, 138, 1, 42); R(WOOD_HI, x + 1, 138, 1, 42); }
+  R('#5f3a20', 0, 146, W, 1); R('#2a1a14', 0, 174, W, 6);
+  // tankard
+  tankard(58, 116);
+  // candle, coins
+  R(PEWTER, 232, 127, 10, 2); R('#f1e9d2', 235, 118, 4, 9); R('#d6cbb0', 238, 118, 1, 9); R(DARK, 236, 116, 1, 2);
+  R('#f4c95d', 262, 126, 6, 2); R('#c99a2e', 262, 127, 6, 1); R('#f4c95d', 263, 124, 6, 2); R('#c99a2e', 263, 125, 6, 1);
+  R('#f4c95d', 272, 127, 5, 2); R('#fff6d8', 273, 127, 1, 1);
+
+  // One visit in ten, the beard shows up wild. Add ?beard=wild (or ?beard=full) to the URL to force it.
+  const beardParam = new URLSearchParams(location.search).get('beard');
+  const WILD = beardParam ? beardParam === 'wild' : Math.random() < 0.1;
+  const WIRE = '#cfa757';
+  const barkeep = (y, blink, pose) => { // pose: 0 idle, 1 reaching under the bar, 2 lifting a mug
+    const SKIN = '#e8b48a', SHADE = '#c98f6a', RED = '#b3262e', RED_LO = '#6e141c', RED_HI = '#e2666a',
+      HAIR = '#f2cf4a', HAIR_HI = '#fbe58a', HAIR_LO = '#d4a92e', BEARD = '#a8823a', BEARD_LO = '#86672b';
+    R(RED, 142, y + 22, 36, 2); R(RED, 138, y + 24, 44, 48);            // shoulders, torso
+    g.globalAlpha = .5;                                                  // flannel plaid
+    for (let x = 140; x < 182; x += 7) R(RED_LO, x, y + 24, 3, 48);
+    for (let dy = 27; dy < 72; dy += 7) R(RED_LO, 138, y + dy, 44, 3);
+    g.globalAlpha = .45;
+    for (let x = 144; x < 182; x += 7) R(RED_HI, x, y + 24, 1, 48);
+    for (let dy = 31; dy < 72; dy += 7) R(RED_HI, 138, y + dy, 44, 1);
+    g.globalAlpha = .28; R('#000000', 138, y + 28, 8, 44); R('#000000', 174, y + 28, 8, 44); // arms in shadow
+    g.globalAlpha = 1;
+    [[155, 10, 0], [156, 8, 5], [157, 6, 10]].forEach(([x, w, dy]) => R('#f1e9d2', x, y + 23 + dy, w, 5)); // undershirt
+    R(RED_LO, 153, y + 23, 2, 6); R(RED_LO, 154, y + 29, 2, 5); R(RED_LO, 155, y + 34, 2, 4);              // collar
+    R(RED_LO, 165, y + 23, 2, 6); R(RED_LO, 164, y + 29, 2, 5); R(RED_LO, 163, y + 34, 2, 4);
+    R(RED_LO, 160, y + 38, 1, 34); [42, 52, 62].forEach(dy => R('#2a1a14', 159, y + dy, 2, 2));          // placket, buttons
+    R('#f0202f', 163, y + 40, 11, 9); R('#ffffff', 163, y + 43, 11, 4);   // "hello my name is" tag
+    [165, 167, 169, 171].forEach(x => R('#ffffff', x, y + 41, 1, 1));
+    R('#1a1020', 165, y + 44, 2, 1); R('#1a1020', 166, y + 45, 1, 1); R('#1a1020', 168, y + 44, 2, 2); R('#1a1020', 171, y + 44, 1, 2); R('#1a1020', 172, y + 45, 1, 1);
+    R(SHADE, 156, y + 20, 8, 3);                                         // neck
+    const up = Date.now() < glanceUntil ? 1 : 0;                         // pointing out the sign
+    const fx = up * 2;                                                   // face features slide over as the head turns
+    g.save(); g.translate(up * 2, -up);                                  // head turns and tips up
+    R(SKIN, 151, y + 6, 18, 14); R(SHADE, 167, y + 6, 2, 14); R(SKIN, 149, y + 10, 2, 4);
+    if (!up) R(SHADE, 169, y + 10, 2, 4);
+    R(HAIR, 153, y - 2, 14, 2); R(HAIR, 151, y, 18, 6); R(HAIR, 150, y + 2, 1, 7); R(HAIR, 169, y + 2, 1, 7);
+    R(HAIR_LO, 166, y, 3, 6); R(HAIR_HI, 154, y - 1, 7, 1);
+    R(HAIR, 157, y - 8, 6, 1); R(HAIR, 156, y - 7, 8, 5); R(HAIR_LO, 162, y - 6, 2, 4); R(HAIR_HI, 157, y - 6, 3, 1); // man bun
+    R(BEARD_LO, 157, y - 2, 6, 1);                                       // hair tie
+    R(BEARD_LO, 154 + fx, y + 9 - up, 4, 1); R(BEARD_LO, 162 + fx, y + 9 - up, 3 + !up, 1); // brows
+    if (blink && !up) { R(SHADE, 155, y + 12, 2, 1); R(SHADE, 163, y + 12, 2, 1); }
+    else { R('#1a1020', 155 + fx, y + 11 - up, 2, 2); R('#1a1020', 163 + fx, y + 11 - up, 2, 2); }
+    if (WILD) {                                                          // the rare, untamed beard
+      [[150, 11, 3, 5], [167, 11, 3, 5], [150, 15, 20, 6], [151, 21, 18, 3], [153, 24, 14, 2], [155, 26, 10, 2],
+       [154, 13, 12, 2], [153, 15, 1, 1], [166, 15, 1, 1]].forEach(([x, dy, w, h]) => R(BEARD, x, y + dy, w, h));
+      [[166, 16, 3, 5], [164, 21, 4, 3], [162, 24, 4, 2], [157, 22, 1, 4], [160, 21, 1, 6], [154, 19, 1, 4]]
+        .forEach(([x, dy, w, h]) => R(BEARD_LO, x, y + dy, w, h));
+      // stray wires poking out in every direction
+      [[149, 13, 1, 1], [148, 16, 2, 1], [149, 19, 1, 1], [148, 21, 1, 1], [150, 22, 1, 2], [171, 12, 1, 1], [170, 15, 2, 1],
+       [171, 18, 1, 1], [172, 20, 1, 1], [169, 22, 2, 1], [170, 24, 1, 1], [152, 24, 1, 2], [151, 26, 1, 1], [167, 25, 1, 2],
+       [154, 27, 1, 2], [153, 29, 1, 1], [157, 28, 1, 3], [160, 28, 1, 2], [161, 30, 1, 1], [163, 28, 1, 3], [165, 27, 1, 1], [166, 28, 1, 1]]
+        .forEach(([x, dy, w, h]) => R(BEARD, x, y + dy, w, h));
+      [[152, 16, 1, 1], [153, 17, 1, 1], [156, 20, 1, 1], [157, 19, 1, 1], [162, 17, 1, 1], [163, 16, 1, 1], [155, 23, 1, 1],
+       [156, 24, 1, 1], [161, 23, 1, 1], [162, 22, 1, 1], [158, 13, 1, 1], [163, 13, 1, 1]]
+        .forEach(([x, dy, w, h]) => R(WIRE, x, y + dy, w, h));
+    } else {
+      R(BEARD, 151, y + 11, 2, 5); R(BEARD, 167, y + 11, 2, 5);         // sideburns
+      R(BEARD, 151, y + 15, 18, 5); R(BEARD, 153, y + 20, 14, 3); R(BEARD, 155, y + 23, 10, 2);
+      R(BEARD, 155, y + 14, 10, 1);                                      // moustache
+      R(BEARD_LO, 166, y + 15, 3, 5); R(BEARD_LO, 164, y + 20, 3, 3); R(BEARD_LO, 157, y + 21, 1, 3); R(BEARD_LO, 160, y + 20, 1, 4);
+    }
+    R('#7a3b2e', 158 + fx, y + 17, 4, 1);                                // mouth
+    g.restore();
+    if (!pose) R(SKIN, 139, 124, 7, 4);                                  // hands on the bar
+    if (pose === 2) {                                                    // lifting a fresh mug of grog
+      for (let i = 0; i < 9; i++) {
+        const ax = 131 - Math.round(i * 1.2), ay = y + 32 - i * 2;
+        R(i % 3 === 1 ? '#8f1d25' : RED, ax, ay, 10, 2); R(RED_LO, ax, ay + 1, 1, 1); R(RED_HI, ax + 4, ay, 1, 1);
+      }
+      tankard(104, y + 6);
+      R(SKIN, 117, y + 9, 6, 7); R(SHADE, 117, y + 11, 4, 1); R(SHADE, 117, y + 13, 4, 1);
+    }
+    if (!up) R(SKIN, 174, 124, 7, 4);
+    else {                                                               // ...or one arm up, pointing at the sign
+      for (let i = 0; i < 13; i++) {
+        const ax = 176 + Math.round(i * .75), ay = y + 30 - i * 2;
+        R(i % 3 === 1 ? '#8f1d25' : RED, ax, ay, 7, 2); R(RED_LO, ax, ay, 1, 2); R(RED_HI, ax + 4, ay, 1, 1);
+      }
+      R(RED_LO, 185, y + 4, 7, 2);                                       // cuff
+      R(SKIN, 185, y - 1, 7, 5); R(SHADE, 187, y + 1, 5, 3); R(SKIN, 192, y + 1, 1, 2);
+      R(SKIN, 186, y - 3, 2, 2); R(SKIN, 185, y - 5, 2, 2); R(SKIN, 184, y - 7, 2, 2); // finger
+    }
+  };
+  const parrot = dy => {
+    R('#a3243b', 278, 74, 3, 6);
+    R('#3fa34d', 280, 67, 7, 9); R('#2f7d4f', 280, 69, 4, 6);
+    R('#3fa34d', 281, 62 + dy, 6, 6); R('#05040f', 284, 64 + dy, 1, 1);
+    R('#f4c95d', 287, 64 + dy, 2, 2); R('#f4c95d', 287, 66 + dy, 1, 1);
+    R(BRASS, 282, 76, 1, 2); R(BRASS, 285, 76, 1, 2);
+  };
+
+  g = canvas.getContext('2d');
+  g.imageSmoothingEnabled = false;
+  const draw = t => {
+    g.globalAlpha = 1;
+    g.drawImage(bg, 0, 0);
+    // window: stars and glints on the water
+    [[14, 44, 3], [28, 45, 17], [40, 43, 9], [52, 46, 25], [47, 51, 31]].forEach(([x, y, p]) => {
+      if ((t + p) % 36 > 3) R('#ffffff', x, y, 1, 1);
+    });
+    for (let i = 0; i < 5; i++) R('#b84a5e', 10 + (i * 17 + (t >> 2) * (i % 2 + 1)) % 44, 69 + (i * 3) % 14, 3, 1);
+    R(DARK, 33, 42, 2, 42); R(DARK, 10, 62, 48, 2);
+    // lanterns
+    LANTERNS.forEach((x, i) => {
+      glow('#f29b54', x + 3, 36, 13, .14 + .04 * hash((t >> 1) + i));
+      R(DARK, x, 30, 7, 2); R(WARM[hash((t >> 1) + i * 5)], x + 1, 32, 5, 7); R(DARK, x, 39, 7, 2);
+    });
+    parrot(t % 60 < 6 ? 1 : 0);
+    const now = Date.now(), last = now - serves[serves.length - 1];
+    const pose = last < 350 ? 1 : last < SERVE_MS ? 2 : 0;
+    barkeep(64 + ((t >> 4) & 1) + (pose === 1 ? 3 : 0), t % 44 < 2, pose);
+    g.drawImage(fg, 0, 0);
+    serves.forEach((ts, i) => { if (now - ts >= SERVE_MS) tankard([116, 196, 98, 212][i], 116); }); // served mugs
+    // candle flame
+    const f = hash(t >> 1);
+    glow('#f29b54', 237, 114, 11, .16 + .03 * f);
+    R('#f29b54', 236, 112 - (f === 1), 2, 4 + (f === 1)); R('#ffd97a', 236, 113, 2 - (f === 2), 3);
+  };
+
+  let t = 0;
+  draw(t);
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) setInterval(() => draw(++t), 125);
+})();
+</script>
+</body>
+</html>
