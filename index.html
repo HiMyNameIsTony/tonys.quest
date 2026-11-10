@@ -119,6 +119,8 @@
     outline: none;
   }
   .choices a { color: #f29b54; }
+  footer a { color: inherit; }
+  footer a:hover, footer a:focus-visible { color: var(--choice); }
   footer {
     padding: 10px 16px 16px;
     font-size: 18px;
@@ -136,17 +138,18 @@
     <p class="speech" id="speech" aria-live="polite">Ahoy! Pull up a stool. What'll it be?</p>
   </div>
 
-  <!-- EDIT ME: the first item is the real link; the rest are just banter.
+  <!-- EDIT ME: the first two items are real links (stream, email); the rest are just banter.
        Add more links by copying the <a> line, or more banter by copying a <button> line. -->
   <ul class="choices">
     <li><a href="https://www.twitch.tv/heymynameistony">Take me to the stream, barkeep.</a></li>
+    <li><a href="mailto:lore@tonys.quest" data-say="A quest, eh? Send word to lore@tonys.quest.">I've got a quest for you. (work inquiries)</a></li>
     <li><button type="button" data-glance data-say="Did you not read the sign? I run the tavern, tell tales, and play games on the stream!">Who are you supposed to be?</button></li>
     <li><button type="button" data-serve data-say="Games, grog, and questionable decisions. All on tap over at the stream.">What do you serve here?</button></li>
     <li><button type="button" data-say="Aye. It's the friends we made along the way. Also the follow button.">Is there treasure on this island?</button></li>
     <li><button type="button" data-say="Take your time. It's nice water.">I'm just here to look at the water.</button></li>
   </ul>
 </main>
-<footer>tonys.quest</footer>
+<footer>tonys.quest &middot; <a href="mailto:lore@tonys.quest">lore@tonys.quest</a></footer>
 
 <script>
 (() => {
